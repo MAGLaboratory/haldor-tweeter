@@ -1,5 +1,5 @@
 import paho.mqtt.client as mqtt
-import time, signal, subprocess, urllib, json, requests
+import time, signal, urllib, json, requests
 import traceback, os
 
 from arrow import Arrow as arrow
@@ -39,6 +39,7 @@ class Tweeter(mqtt.Client):
         confirmation_interval: int
         confirmation_time: int
         confirmation_updates: int
+        tweet_timeout: int
         twitter_consumer_key: str
         twitter_consumer_secret: str
         twitter_access_key: str
@@ -89,27 +90,34 @@ class Tweeter(mqtt.Client):
 
     # evaluate confirmation time
     def evaluate_ct(self):
-        print("Evaluating confirmation time (ECT), pre-notification at " + str(self.pre_latch_notif) + " out of " + str(self.data.confirmation_updates))
-        last_holdoff = self.ct.holdoff
-        # reset the timer if no notifications received for a while
-        if (self.pre_latch_notif >= self.data.confirmation_updates):
-            print("ECT: Reset confirmation time.")
-            self.ct.time = 2
-            self.ct.holdoff = False
-        result = self.ct.update(self.latched_value)
-        self.pre_latch_notif += 1
-        if self.ct.holdoff:
-            announcement = str((self.ct.delay - self.ct.time)*self.data.confirmation_interval) + " until " + self.data.enumeration[self.latched_value]
-            print("ECT: in holdoff, publishing time announcement: " + announcement)
-            self.publish("tweeter/time_announce", announcement)
-        if last_holdoff and not self.ct.holdoff:
-            announcement = "is " + self.data.enumeration[result[1]]
-            print("ECT: new value or value restored: " + announcement)
-            self.publish("tweeter/time_announce", announcement)
-        if result[0]:
-            attime = arrow.fromtimestamp(time.time()).to(self.data.timezone).strftime(self.data.time_format)
-            self.tweet(self.data.message.format(self.data.enumeration[result[1]], attime))
+        try:
+            print("Evaluating confirmation time (ECT), pre-notification at " + str(self.pre_latch_notif) + " out of " + str(self.data.confirmation_updates))
+            last_holdoff = self.ct.holdoff
+            # reset the timer if no notifications received for a while
+            if (self.pre_latch_notif >= self.data.confirmation_updates):
+                print("ECT: Reset confirmation time.")
+                self.ct.time = 2
+                self.ct.holdoff = False
+            result = self.ct.update(self.latched_value)
+            self.pre_latch_notif += 1
+            if self.ct.holdoff:
+                announcement = str((self.ct.delay - self.ct.time)*self.data.confirmation_interval) + " until " + self.data.enumeration[self.latched_value]
+                print("ECT: in holdoff, publishing time announcement: " + announcement)
+                self.publish("tweeter/time_announce", announcement)
+            if last_holdoff and not self.ct.holdoff:
+                announcement = "is " + self.data.enumeration[result[1]]
+                print("ECT: new value or value restored: " + announcement)
+                self.publish("tweeter/time_announce", announcement)
+            if result[0]:
+                attime = arrow.fromtimestamp(time.time()).to(self.data.timezone).strftime(self.data.time_format)
+                self.tweet(self.data.message.format(self.data.enumeration[result[1]], attime))
+        except:
+            traceback.print_ext()
+            os._exit(1)
 
+    def signal_handler(self, signum, frame):
+        print("Caught a deadly signal!")
+        self.running = False
 
     def bootup(self):
         print("Bootup Delay")
@@ -120,7 +128,11 @@ class Tweeter(mqtt.Client):
             client_secret=self.data.twitter_consumer_secret,
             resource_owner_key=self.data.twitter_access_key,
             resource_owner_secret=self.data.twitter_access_secret)
+        self.twitter_oauth.timeout = self.data.tweet_timeout
         time.sleep(60);
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+        self.running = True
 
     def run(self):
         print("Haldor Tweeter version " + self.version + " starting") 
@@ -129,5 +141,8 @@ class Tweeter(mqtt.Client):
         timer = MultiTimer(interval=self.data.confirmation_interval, function=self.evaluate_ct)
         timer.start()
 
-        while True: 
-            self.loop_forever()
+        while self.running: 
+            self.loop()
+
+        timer.stop()
+        exit(0)

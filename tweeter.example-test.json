@@ -12,6 +12,7 @@
 	"confirmation_interval": 15,
 	"confirmation_time": 8,
 	"confirmation_updates": 5,
+	"tweet_timeout": 15,
 	"twitter_consumer_key": "",
 	"twitter_consumer_secret": "",
 	"twitter_access_key": "",
