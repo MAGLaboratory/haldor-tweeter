@@ -1,0 +1,24 @@
+{
+	"description": "This file configures the tweeter.",
+	"listen_topics": ["haldor/checkup", "haldor/event"],
+	"listen_channel": "Open Switch",
+	"enumeration": {
+		"0" : "Closed",
+		"1" : "Open"
+	},
+	"message": "THIS IS A TEST\n The space is now: {0} at time {1}!",
+	"timezone": "US/Pacific",
+	"time_format": "%m/%d/%Y %I:%M %p",
+	"confirmation_interval": 15,
+	"confirmation_time": 8,
+	"confirmation_updates": 5,
+	"tweet_timeout": 15,
+	"twitter_consumer_key": "",
+	"twitter_consumer_secret": "",
+	"twitter_access_key": "",
+	"twitter_access_secret": "",
+	"pidfile": "/tmp/tweeter.pid",
+	"mqtt_broker": "daisy",
+	"mqtt_port": 1883,
+	"mqtt_timeout": 60
+}
