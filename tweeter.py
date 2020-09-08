@@ -47,6 +47,7 @@ class Tweeter(mqtt.Client):
         pidfile: str
         mqtt_broker: str
         mqtt_port: int
+        mqtt_timeout: int
 
     def on_log(self, client, userdata, level, buff):
         if level != mqtt.MQTT_LOG_DEBUG:
@@ -136,7 +137,7 @@ class Tweeter(mqtt.Client):
 
     def run(self):
         print("Haldor Tweeter version " + self.version + " starting") 
-        self.connect(self.data.mqtt_broker, self.data.mqtt_port, 60)
+        self.connect(self.data.mqtt_broker, self.data.mqtt_port, self.data.mqtt_timeout)
         self.bootup()
         timer = MultiTimer(interval=self.data.confirmation_interval, function=self.evaluate_ct)
         timer.start()

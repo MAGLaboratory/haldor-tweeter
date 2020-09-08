@@ -19,5 +19,6 @@
 	"twitter_access_secret": "",
 	"pidfile": "/tmp/tweeter.pid",
 	"mqtt_broker": "hal",
-	"mqtt_port": 1883
+	"mqtt_port": 1883,
+	"mqtt_timeout": 60
 }
