@@ -1,0 +1,11 @@
+[Unit]
+Description=MAG Laboratory Haldor Tweeter, Automatically Posts When The Space Is Open
+
+[Service]
+User=tweeter
+Group=tweeter
+Restart=on-failure
+ExecStart=/home/tweeter/haldor-tweeter/start.sh nodaemon
+
+[Install]
+WantedBy=multi-user.target

@@ -93,7 +93,6 @@ class Tweeter(mqtt.Client):
     def evaluate_ct(self):
         try:
             print("Evaluating confirmation time (ECT), pre-notification at " + str(self.pre_latch_notif) + " out of " + str(self.data.confirmation_updates))
-            last_holdoff = self.ct.holdoff
             # reset the timer if no notifications received for a while
             if (self.pre_latch_notif >= self.data.confirmation_updates):
                 print("ECT: Reset confirmation time.")
@@ -105,7 +104,7 @@ class Tweeter(mqtt.Client):
                 announcement = str((self.ct.delay - self.ct.time)*self.data.confirmation_interval) + " until " + self.data.enumeration[self.latched_value]
                 print("ECT: in holdoff, publishing time announcement: " + announcement)
                 self.publish("tweeter/time_announce", announcement)
-            if last_holdoff and not self.ct.holdoff:
+            else:
                 announcement = "is " + self.data.enumeration[result[1]]
                 print("ECT: new value or value restored: " + announcement)
                 self.publish("tweeter/time_announce", announcement)
